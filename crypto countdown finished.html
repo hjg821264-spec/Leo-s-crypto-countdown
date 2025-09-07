@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto Countdown</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ff0000;
+  }
+
+  canvas#background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+  }
+
+  #countdown {
+    position: relative;
+    z-index: 1;
+    font-size: 5rem;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px #ff0000, 0 0 20px #ff4d4d, 0 0 40px #ff1a1a;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 30px 50px;
+    border-radius: 20px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="background"></canvas>
+<div id="countdown">Loading...</div>
+
+<script>
+  // Countdown
+  const countdownElement = document.getElementById('countdown');
+
+  // Starte Countdown mit 23 Tagen, 1 Stunde, 50 Minuten ab jetzt
+  const targetDate = new Date(Date.now() + (23*24*60*60*1000) + (1*60*60*1000) + (50*60*1000));
+
+  function updateCountdown() {
+    const now = new Date();
+    const diff = targetDate - now;
+
+    if (diff <= 0) {
+      countdownElement.innerHTML = "00:00:00:00";
+      clearInterval(interval);
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    countdownElement.innerHTML = 
+      String(days).padStart(2,'0') + ":" +
+      String(hours).padStart(2,'0') + ":" +
+      String(minutes).padStart(2,'0') + ":" +
+      String(seconds).padStart(2,'0');
+  }
+
+  const interval = setInterval(updateCountdown, 1000);
+  updateCountdown();
+
+  // Animierter Hintergrund (Crypto-Netzwerk)
+  const canvas = document.getElementById('background');
+  const ctx = canvas.getContext('2d');
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+
+  const nodes = [];
+  const nodeCount = 100;
+
+  class Node {
+    constructor() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      this.vx = (Math.random() - 0.5) * 0.5;
+      this.vy = (Math.random() - 0.5) * 0.5;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      if(this.x < 0 || this.x > width) this.vx *= -1;
+      if(this.y < 0 || this.y > height) this.vy *= -1;
+    }
+    draw() {
+      ctx.fillStyle = "#ff0000";
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  for(let i=0;i<nodeCount;i++) nodes.push(new Node());
+
+  function animate() {
+    ctx.clearRect(0,0,width,height);
+
+    // Verbindungen
+    for(let i=0;i<nodeCount;i++){
+      nodes[i].draw();
+      for(let j=i+1;j<nodeCount;j++){
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < 120){
+          ctx.strokeStyle = `rgba(255,0,0,${1-dist/120})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    nodes.forEach(n => n.update());
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+
+  window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+</script>
+
+</body>
+</html>
